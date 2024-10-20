@@ -4,15 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentiment Distribution Chart</title>
+    <title>Sentiment Distribution Charts</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-gradient text-gray-800 min-h-screen flex flex-col items-center justify-center">
     <div class="container mx-auto p-10 bg-white rounded-lg shadow-lg backdrop-blur">
         <h1 class="text-3xl font-bold text-center text-purple-600 mb-6">Sentiment Distribution</h1>
-        <img src="{{ url_for('show_chart_img') }}" alt="Sentiment Chart" class="mx-auto">
         
+        <div class="flex justify-around">
+            <!-- Pie Chart -->
+            <div class="w-1/2 p-4">
+                <h2 class="text-xl font-semibold text-center mb-4">Pie Chart</h2>
+                <img src="{{ url_for('show_chart_img', chart_type='pie') }}" alt="Sentiment Pie Chart" class="mx-auto">
+            </div>
+
+            <!-- Bar Chart -->
+            <div class="w-1/2 p-4">
+                <h2 class="text-xl font-semibold text-center mb-4">Bar Chart</h2>
+                <img src="{{ url_for('show_chart_img', chart_type='bar') }}" alt="Sentiment Bar Chart" class="mx-auto">
+            </div>
+        </div>
+
         <!-- Add download link for CSV -->
         {% if global_csv_path %}
             <a href="{{ url_for('download_csv') }}" class="mt-4 bg-green-500 text-white font-semibold py-2 px-4 rounded hover:bg-green-600 transition duration-300">Download CSV</a>
