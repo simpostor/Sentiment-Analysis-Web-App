@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from flask import Flask, request, render_template, send_file, after_this_request, redirect, url_for
 from transformers import pipeline
+from wordcloud import WordCloud
 
 app = Flask(__name__)
 
@@ -15,12 +16,14 @@ nlp = pipeline("sentiment-analysis")
 global_pie_chart_path = None
 global_bar_chart_path = None
 global_csv_path = None
+global_wordcloud_path = None  # Add this line for word cloud
 
 @app.route("/", methods=["GET", "POST"])
 def home():
     global global_pie_chart_path
     global global_bar_chart_path
     global global_csv_path
+    global global_wordcloud_path  # Add this line for word cloud
 
     sentiment = None
 
@@ -65,7 +68,7 @@ def home():
 
                         # Create a pie chart from the sentiment data
                         plt.figure(figsize=(6, 6))
-                        plt.pie(sentiment_counts, labels=sentiment_counts.index, autopct='%1.1f%%', startangle=140, colors=['#4CAF50', '#F44336'])
+                        plt.pie(sentiment_counts, labels=sentiment_counts.index, autopct='%1.1f%%', startangle=140, colors=['#10B981', '#F43F5E'])
                         plt.title('Sentiment Distribution')
 
                         # Save the pie chart to a temporary file
@@ -79,7 +82,7 @@ def home():
 
                         # Create a bar chart from the sentiment data
                         plt.figure(figsize=(6, 6))
-                        sentiment_counts.plot(kind='bar', color=['#4CAF50', '#F44336'])
+                        sentiment_counts.plot(kind='bar', color=['#10B981', '#F43F5E'])
                         plt.title('Sentiment Count')
                         plt.xlabel('Sentiment')
                         plt.ylabel('Count')
@@ -92,6 +95,17 @@ def home():
 
                         # Set the global bar chart path
                         global_bar_chart_path = temp_bar_chart_path
+
+                        # Generate Word Cloud
+                        wordcloud = WordCloud(width=800, height=400, background_color='white').generate(' '.join(df['review']))
+
+                        # Save the word cloud to a temporary file
+                        temp_fd, temp_wordcloud_path = tempfile.mkstemp(suffix='.png')
+                        os.close(temp_fd)  # Close the file descriptor
+                        wordcloud.to_file(temp_wordcloud_path)
+
+                        # Set the global word cloud path
+                        global_wordcloud_path = temp_wordcloud_path
 
                         return redirect(url_for('show_chart'))
 
@@ -109,9 +123,13 @@ def show_chart():
     global global_pie_chart_path
     global global_bar_chart_path
     global global_csv_path
+    global global_wordcloud_path  # Add this line for word cloud
 
-    if global_pie_chart_path and global_bar_chart_path:
-        return render_template("show_chart.html", global_pie_chart_path=global_pie_chart_path, global_bar_chart_path=global_bar_chart_path, global_csv_path=global_csv_path)
+    if global_pie_chart_path and global_bar_chart_path and global_wordcloud_path:
+        return render_template("show_chart.html", global_pie_chart_path=global_pie_chart_path, 
+                               global_bar_chart_path=global_bar_chart_path, 
+                               global_wordcloud_path=global_wordcloud_path,  # Pass the word cloud path
+                               global_csv_path=global_csv_path)
 
     return "No charts available", 404
 
@@ -119,8 +137,12 @@ def show_chart():
 def show_chart_img(chart_type):
     global global_pie_chart_path
     global global_bar_chart_path
+    global global_wordcloud_path  # Add this line for word cloud
 
-    chart_path = global_pie_chart_path if chart_type == 'pie' else global_bar_chart_path
+    if chart_type == 'wordcloud':
+        chart_path = global_wordcloud_path
+    else:
+        chart_path = global_pie_chart_path if chart_type == 'pie' else global_bar_chart_path
 
     if chart_path:
         @after_this_request
